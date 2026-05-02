@@ -45,7 +45,7 @@ public class ClientLodReceiver {
         });
 
         ClientPlayNetworking.registerGlobalReceiver(PreSerializedLodPayload.TYPE, (payload, context) -> {
-            context.client().execute(() -> {
+            java.util.concurrent.CompletableFuture.runAsync(() -> {
                 ClientLevel level = Minecraft.getInstance().level;
                 if (level == null) return;
                 LODBulkPayload bulk = payload.decodeBulk(level.registryAccess());
