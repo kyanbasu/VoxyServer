@@ -22,13 +22,13 @@ players without voxy are unaffected.
 
 due to voxy's license, the source and binary can't be included in this repo. you'll need to clone and build it yourself.
 
-You have to use voxy for 1.21.1, backported by [m3t4f1v3](https://github.com/m3t4f1v3/voxy).
+You have to use voxy for 1.21.1, backported by [m3t4f1v3](https://github.com/m3t4f1v3/voxy/tree/mc_1211).
 
 ### unix
 
 1. clone voxy into the root of this project:
    ```bash
-   git clone https://github.com/m3t4f1v3/voxy.git
+   git clone -b mc_1211 --single-branch https://github.com/m3t4f1v3/voxy.git
    ```
 
 2. build the voxy jar:
@@ -66,7 +66,7 @@ the output jar will be in `build/libs/`.
 
 1. clone voxy into the root of this project:
    ```cmd
-   git clone https://github.com/m3t4f1v3/voxy.git
+   git clone -b mc_1211 --single-branch https://github.com/m3t4f1v3/voxy.git
    ```
 
 2. build the voxy jar:
