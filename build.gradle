@@ -52,10 +52,10 @@ dependencies {
 
     modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
-    modImplementation files("libs/voxy-1.21.11.jar")
-    modCompileOnly "maven.modrinth:sodium:mc1.21.11-0.8.6-fabric"
-    modCompileOnly "com.terraformersmc:modmenu:17.0.0"
-    modCompileOnly "me.shedaniel.cloth:cloth-config-fabric:21.11.153"
+    modImplementation files("libs/voxy-0.2.14-alpha.jar")
+    modCompileOnly "maven.modrinth:sodium:mc1.21.1-0.6.0-fabric"
+    modCompileOnly "com.terraformersmc:modmenu:11.0.2"
+    modCompileOnly "me.shedaniel.cloth:cloth-config-fabric:15.0.130"
 
     // lwjgl is bundled with the client but not the dedicated server
     // voxy's Mapper uses MemoryUtil for off-heap allocation
@@ -63,6 +63,11 @@ dependencies {
     include implementation("org.lwjgl:lwjgl::natives-windows")
     include implementation("org.lwjgl:lwjgl::natives-linux")
     include implementation("org.lwjgl:lwjgl::natives-linux-arm64")
+
+    include implementation("org.lwjgl:lwjgl-zstd:3.3.3")
+    include implementation("org.lwjgl:lwjgl-zstd::natives-windows")
+    include implementation("org.lwjgl:lwjgl-zstd::natives-linux")
+    include implementation("org.lwjgl:lwjgl-zstd::natives-linux-arm64")
 }
 
 processResources {
