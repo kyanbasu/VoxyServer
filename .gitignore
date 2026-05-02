@@ -11,3 +11,6 @@ bin/
 voxy/
 voxy_old/
 libs/
+
+src/main/resources/librocks*
+rocksdbjni*.jar

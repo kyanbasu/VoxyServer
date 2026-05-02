@@ -44,7 +44,14 @@ You have to use voxy for 1.21.1, backported by [m3t4f1v3](https://github.com/m3t
    cp voxy/build/libs/voxy-*.jar libs/voxy.jar
    ```
 
-4. build voxyserver:
+4. download and extract RocksDB native libraries into `src/main/resources/` (required for Sinytra Connector compatibility):
+   ```bash
+   wget https://repo1.maven.org/maven2/org/rocksdb/rocksdbjni/10.2.1/rocksdbjni-10.2.1.jar
+   jar xf rocksdbjni-10.2.1.jar librocksdbjni-linux-aarch64.so librocksdbjni-linux64.so librocksdbjni-win64.dll
+   mv librocksdbjni-linux-aarch64.so librocksdbjni-linux64.so librocksdbjni-win64.dll src/main/resources/
+   ```
+
+5. build voxyserver:
    ```bash
    ./gradlew build
    ```
@@ -75,7 +82,16 @@ the output jar will be in `build/libs/`.
    for %f in (voxy\build\libs\voxy-*.jar) do copy "%f" libs\voxy.jar
    ```
 
-4. build voxyserver:
+4. download and extract RocksDB native libraries into `src\main\resources\` (required for Sinytra Connector compatibility):
+   ```cmd
+   curl -O https://repo1.maven.org/maven2/org/rocksdb/rocksdbjni/10.2.1/rocksdbjni-10.2.1.jar
+   jar xf rocksdbjni-10.2.1.jar librocksdbjni-linux-aarch64.so librocksdbjni-linux64.so librocksdbjni-win64.dll
+   move librocksdbjni-linux-aarch64.so src\main\resources\
+   move librocksdbjni-linux64.so src\main\resources\
+   move librocksdbjni-win64.dll src\main\resources\
+   ```
+
+5. build voxyserver:
    ```cmd
    gradlew build
    ```
