@@ -2,7 +2,11 @@
 
 a fabric server side mod that voxelizes chunks into LODs using [voxy](https://github.com/MCRcortex/voxy) and streams them to connected clients. players with voxy installed will receive LOD data from the server automatically, no client side world scanning/loading needed.
 
-**Latest: minecraft 1.21.11 | fabric**
+Backported to 1.21.1, using [m3t4f1v3's voxy](https://github.com/m3t4f1v3/voxy) fork.
+
+**Latest: minecraft 1.21.1 | fabric**
+
+Dedicated for [Create Aeronautics](https://modrinth.com/mod/create-aeronautics), works with NeoForge using [Sinytra Connector](https://modrinth.com/mod/connector).
 
 ## how it works
 
@@ -18,11 +22,13 @@ players without voxy are unaffected.
 
 due to voxy's license, the source and binary can't be included in this repo. you'll need to clone and build it yourself.
 
+You have to use voxy for 1.21.1, backported by [m3t4f1v3](https://github.com/m3t4f1v3/voxy).
+
 ### unix
 
 1. clone voxy into the root of this project:
    ```bash
-   git clone https://github.com/MCRcortex/voxy.git
+   git clone https://github.com/m3t4f1v3/voxy.git
    ```
 
 2. build the voxy jar:
@@ -53,7 +59,7 @@ the output jar will be in `build/libs/`.
 
 1. clone voxy into the root of this project:
    ```cmd
-   git clone https://github.com/MCRcortex/voxy.git
+   git clone https://github.com/m3t4f1v3/voxy.git
    ```
 
 2. build the voxy jar:
