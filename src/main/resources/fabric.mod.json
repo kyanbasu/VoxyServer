@@ -1,59 +1,51 @@
 {
-  "schemaVersion": 1,
-  "id": "voxyserver",
-  "version": "${version}",
-  "name": "VoxyServer",
-  "description": "",
-  "authors": ["dripps"],
-  "contact": {
-    "homepage": "https://modrinth.com/mod/voxyserver",
-    "issues": "https://github.com/poosmacker/voxyserver/issues",
-    "sources": "https://github.com/poosmacker/voxyserver"
-  },
-  "license": "GPL-3.0",
-  "icon": "assets/icon.png",
-  "environment": "*",
-  "entrypoints": {
-    "fabric-datagen": [
-      "com.dripps.voxyserver.client.VoxyserverDataGenerator"
-    ],
-    "client": [
-      "com.dripps.voxyserver.client.VoxyserverClient"
-    ],
-    "main": [
-      "com.dripps.voxyserver.Voxyserver"
-    ],
-    "modmenu": [
-      "com.dripps.voxyserver.client.VoxyModMenuIntegration"
-    ]
-  },
-  "mixins": [
-    "voxyserver.mixins.json",
-    {
-      "config": "voxyserver.client.mixins.json",
-      "environment": "client"
-    }
-  ],
-  "depends": {
-    "fabricloader": ">=${loader_version}",
-    "fabric-api": "*",
-    "minecraft": "${minecraft_version}"
-  },
-  "suggests": {
-    "voxy": "*",
-    "modmenu": "*",
-    "cloth-config": "*"
-  },
-  "custom": {
-    "modmenu": {
-      "links": {
-        "modmenu.discord": "https://discord.gg/fKQqFjNP2W",
-        "modmenu.modrinth": "https://modrinth.com/mod/voxyserver"
-      },
-      "update_checker": false
-    }
-  },
-  "breaks": {
-    "voxyworldgenv2": "*"
-  }
+	"schemaVersion": 1,
+	"id": "voxyserver",
+	"version": "${version}",
+	"name": "VoxyServer",
+	"description": "",
+	"authors": ["dripps"],
+	"contact": {
+		"homepage": "https://modrinth.com/mod/voxyserver",
+		"issues": "https://github.com/poosmacker/voxyserver/issues",
+		"sources": "https://github.com/poosmacker/voxyserver"
+	},
+	"license": "GPL-3.0",
+	"icon": "assets/icon.png",
+	"environment": "*",
+	"entrypoints": {
+		"fabric-datagen": ["com.dripps.voxyserver.client.VoxyserverDataGenerator"],
+		"client": ["com.dripps.voxyserver.client.VoxyserverClient"],
+		"main": ["com.dripps.voxyserver.Voxyserver"],
+		"modmenu": ["com.dripps.voxyserver.client.VoxyModMenuIntegration"]
+	},
+	"mixins": [
+		"voxyserver.mixins.json",
+		{
+			"config": "voxyserver.client.mixins.json",
+			"environment": "client"
+		}
+	],
+	"depends": {
+		"fabricloader": ">=${loader_version}",
+		"fabric-api": "*",
+		"minecraft": "${minecraft_version}",
+		"voxy": "*"
+	},
+	"suggests": {
+		"modmenu": "*",
+		"cloth-config": "*"
+	},
+	"custom": {
+		"modmenu": {
+			"links": {
+				"modmenu.discord": "https://discord.gg/fKQqFjNP2W",
+				"modmenu.modrinth": "https://modrinth.com/mod/voxyserver"
+			},
+			"update_checker": false
+		}
+	},
+	"breaks": {
+		"voxyworldgenv2": "*"
+	}
 }
