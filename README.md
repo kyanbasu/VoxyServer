@@ -1,5 +1,7 @@
 # voxyserver
 
+> An unofficial backport of VoxyServer for Minecraft 1.21.1. 
+
 a fabric server side mod that voxelizes chunks into LODs using [voxy](https://github.com/MCRcortex/voxy) and streams them to connected clients. players with voxy installed will receive LOD data from the server automatically, no client side world scanning/loading needed.
 
 Backported to 1.21.1, using [m3t4f1v3's voxy](https://github.com/m3t4f1v3/voxy) fork.
