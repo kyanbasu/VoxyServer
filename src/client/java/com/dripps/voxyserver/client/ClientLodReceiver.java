@@ -45,13 +45,77 @@ public class ClientLodReceiver {
         });
 
         ClientPlayNetworking.registerGlobalReceiver(PreSerializedLodPayload.TYPE, (payload, context) -> {
+            ClientLevel level = context.client().level;
+            if (level == null) return;
+            var registryAccess = level.registryAccess();
+            
             java.util.concurrent.CompletableFuture.runAsync(() -> {
-                ClientLevel level = Minecraft.getInstance().level;
-                if (level == null) return;
-                LODBulkPayload bulk = payload.decodeBulk(level.registryAccess());
-                for (LODSectionPayload section : bulk.sections()) {
-                    handleSection(section);
-                }
+                LODBulkPayload bulk = payload.decodeBulk(registryAccess);
+                
+                context.client().execute(() -> {
+                    ClientLevel mainLevel = context.client().level;
+                    if (mainLevel == null) return;
+                    
+                    var instance = VoxyCommon.getInstance();
+                    if (instance == null) return;
+
+                    WorldIdentifier worldId = WorldIdentifier.of(mainLevel);
+                    if (worldId == null) return;
+
+                    WorldEngine engine = instance.getOrCreate(worldId);
+                    Mapper mapper = engine.getMapper();
+                    
+                    java.util.List<SectionData> sectionDataList = new java.util.ArrayList<>();
+                    for (LODSectionPayload section : bulk.sections()) {
+                        long[] remappedLut = remapLut(section.lutBlockStateIds(), section.lutBiomeIds(),
+                                section.lutLight(), mapper, mainLevel);
+                        sectionDataList.add(new SectionData(section, remappedLut));
+                    }
+                    
+                    java.util.concurrent.CompletableFuture.runAsync(() -> {
+                        java.util.List<VoxelizedSection> readySections = new java.util.ArrayList<>();
+                        
+                        for (SectionData data : sectionDataList) {
+                            LODSectionPayload sectionPayload = data.payload();
+                            int secX = WorldEngine.getX(sectionPayload.sectionKey());
+                            int secY = WorldEngine.getY(sectionPayload.sectionKey());
+                            int secZ = WorldEngine.getZ(sectionPayload.sectionKey());
+                            short[] indexArray = sectionPayload.indexArray();
+                            
+                            for (int oy = 0; oy < 2; oy++) {
+                                for (int oz = 0; oz < 2; oz++) {
+                                    for (int ox = 0; ox < 2; ox++) {
+                                        VoxelizedSection vs = VoxelizedSection.createEmpty();
+                                        vs.setPosition(secX * 2 + ox, secY * 2 + oy, secZ * 2 + oz);
+
+                                        int nonAirCount = 0;
+                                        for (int vy = 0; vy < 16; vy++) {
+                                            for (int vz = 0; vz < 16; vz++) {
+                                                for (int vx = 0; vx < 16; vx++) {
+                                                    int wsIdx = ((oy * 16 + vy) << 10) | ((oz * 16 + vz) << 5) | (ox * 16 + vx);
+                                                    int vsIdx = (vy << 8) | (vz << 4) | vx;
+                                                    long id = data.remappedLut()[indexArray[wsIdx] & 0xFFFF];
+                                                    vs.section[vsIdx] = id;
+                                                    if (!Mapper.isAir(id)) nonAirCount++;
+                                                }
+                                            }
+                                        }
+                                        vs.lvl0NonAirCount = nonAirCount;
+
+                                        WorldConversionFactory.mipSection(vs, mapper);
+                                        readySections.add(vs);
+                                    }
+                                }
+                            }
+                        }
+                        
+                        context.client().execute(() -> {
+                            for (VoxelizedSection vs : readySections) {
+                                WorldUpdater.insertUpdate(engine, vs);
+                            }
+                        });
+                    });
+                });
             });
         });
 
@@ -60,57 +124,7 @@ public class ClientLodReceiver {
         });
     }
 
-    private static void handleSection(LODSectionPayload payload) {
-        var instance = VoxyCommon.getInstance();
-        if (instance == null) return;
-
-        ClientLevel level = Minecraft.getInstance().level;
-        if (level == null) return;
-
-        WorldIdentifier worldId = WorldIdentifier.of(level);
-        if (worldId == null) return;
-
-        WorldEngine engine = instance.getOrCreate(worldId);
-        Mapper mapper = engine.getMapper();
-
-        long[] remappedLut = remapLut(payload.lutBlockStateIds(), payload.lutBiomeIds(),
-                payload.lutLight(), mapper, level);
-
-        int secX = WorldEngine.getX(payload.sectionKey());
-        int secY = WorldEngine.getY(payload.sectionKey());
-        int secZ = WorldEngine.getZ(payload.sectionKey());
-
-        short[] indexArray = payload.indexArray();
-
-        // split 32x32x32 world section into 8 VoxelizedSections (16x16x16 each)
-        for (int oy = 0; oy < 2; oy++) {
-            for (int oz = 0; oz < 2; oz++) {
-                for (int ox = 0; ox < 2; ox++) {
-                    VoxelizedSection vs = VoxelizedSection.createEmpty();
-                    vs.setPosition(secX * 2 + ox, secY * 2 + oy, secZ * 2 + oz);
-
-                    int nonAirCount = 0;
-                    for (int vy = 0; vy < 16; vy++) {
-                        for (int vz = 0; vz < 16; vz++) {
-                            for (int vx = 0; vx < 16; vx++) {
-                                // world section index: (y<<10)|(z<<5)|x
-                                int wsIdx = ((oy * 16 + vy) << 10) | ((oz * 16 + vz) << 5) | (ox * 16 + vx);
-                                // voxelized section level 0 index: (y<<8)|(z<<4)|x
-                                int vsIdx = (vy << 8) | (vz << 4) | vx;
-                                long id = remappedLut[indexArray[wsIdx] & 0xFFFF];
-                                vs.section[vsIdx] = id;
-                                if (!Mapper.isAir(id)) nonAirCount++;
-                            }
-                        }
-                    }
-                    vs.lvl0NonAirCount = nonAirCount;
-
-                    WorldConversionFactory.mipSection(vs, mapper);
-                    WorldUpdater.insertUpdate(engine, vs);
-                }
-            }
-        }
-    }
+    private record SectionData(LODSectionPayload payload, long[] remappedLut) {}
 
     private static long[] remapLut(int[] blockStateIds, int[] biomeIds, byte[] light,
                                     Mapper mapper, ClientLevel level) {
