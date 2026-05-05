@@ -329,11 +329,22 @@ public class LodStreamingService {
             }
 
             int version = getSectionVersion(dimOrd, key);
+
+            // If this section was already sent at the current version, skip
             if (tracker.hasSent(key, version)) continue;
-            if (isSectionPendingDirty(dimOrd, key)) continue;
+
+            // If section is pending dirty, defer it (mark as missed so we retry soon)
+            if (isSectionPendingDirty(dimOrd, key)) {
+                tracker.markMissed(key);
+                continue;
+            }
 
             WorldSection section = world.acquireIfExists(key);
-            if (section == null) continue;
+            if (section == null) {
+                // Section doesn't exist yet, mark as missed so we retry soon
+                tracker.markMissed(key);
+                continue;
+            }
 
             boolean sectionCorrupted = false;
             try {
@@ -462,6 +473,8 @@ public class LodStreamingService {
 
     private void processDirtySection(MinecraftServer server, long compositeKey) {
         if (shouldDeferInitialLoad(compositeKey)) {
+            // Re-queue the section so it gets retried later instead of being dropped permanently
+            queuedDirtySections.add(compositeKey);
             return;
         }
 

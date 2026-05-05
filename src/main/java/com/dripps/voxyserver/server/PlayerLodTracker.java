@@ -1,13 +1,17 @@
 package com.dripps.voxyserver.server;
 
 import it.unimi.dsi.fastutil.longs.Long2IntOpenHashMap;
+import it.unimi.dsi.fastutil.longs.LongOpenHashSet;
 import me.cortex.voxy.common.world.WorldEngine;
 import net.minecraft.server.level.ServerPlayer;
 
 public class PlayerLodTracker {
     public static final long NO_SECTION_KEY = -1L;
+    private static final int MAX_MISSED_RETRIES = 3;
 
     private final Long2IntOpenHashMap sentSectionVersions = new Long2IntOpenHashMap();
+    private final LongOpenHashSet missedSections = new LongOpenHashSet();
+    private final Long2IntOpenHashMap missedSectionRetries = new Long2IntOpenHashMap();
     private volatile boolean ready = false;
     private int lastChunkX;
     private int lastChunkZ;
@@ -32,6 +36,7 @@ public class PlayerLodTracker {
 
     public PlayerLodTracker() {
         this.sentSectionVersions.defaultReturnValue(-1);
+        this.missedSectionRetries.defaultReturnValue(0);
     }
 
     public boolean isReady() {
@@ -48,15 +53,40 @@ public class PlayerLodTracker {
 
     public synchronized void markSent(long sectionKey, int version) {
         sentSectionVersions.put(sectionKey, version);
+        missedSections.remove(sectionKey);
+        missedSectionRetries.remove(sectionKey);
+    }
+
+    public synchronized void markMissed(long sectionKey) {
+        if (!sentSectionVersions.containsKey(sectionKey)) {
+            int retries = missedSectionRetries.get(sectionKey);
+            if (retries < MAX_MISSED_RETRIES) {
+                missedSections.add(sectionKey);
+                missedSectionRetries.put(sectionKey, retries + 1);
+            }
+        }
+    }
+
+    public synchronized long nextMissedSectionKey() {
+        if (missedSections.isEmpty()) {
+            return NO_SECTION_KEY;
+        }
+        long key = missedSections.longIterator().nextLong();
+        missedSections.remove(key);
+        return key;
     }
 
     public synchronized void reset() {
         sentSectionVersions.clear();
+        missedSections.clear();
+        missedSectionRetries.clear();
         resetScanStateLocked();
     }
 
     public synchronized void invalidate(long sectionKey) {
         sentSectionVersions.remove(sectionKey);
+        missedSections.remove(sectionKey);
+        missedSectionRetries.remove(sectionKey);
     }
 
     public int getLastChunkX() {
@@ -106,6 +136,8 @@ public class PlayerLodTracker {
         if (geometryChanged || centerChanged) {
             resetScanCursorLocked();
             scanExhausted = false;
+            missedSections.clear();
+            missedSectionRetries.clear();
         }
 
         if (scanExhausted) {
@@ -114,6 +146,8 @@ public class PlayerLodTracker {
             }
             resetScanCursorLocked();
             scanExhausted = false;
+            missedSections.clear();
+            missedSectionRetries.clear();
         }
 
         if (!scanCursorInitialized) {
@@ -124,6 +158,12 @@ public class PlayerLodTracker {
     }
 
     public synchronized long nextSectionKeyToScan(long currentTick, long idleRescanIntervalTicks) {
+        // First, drain any missed sections from a previous cycle
+        long missedKey = nextMissedSectionKey();
+        if (missedKey != NO_SECTION_KEY) {
+            return missedKey;
+        }
+
         if (scanExhausted || !scanGeometryInitialized) {
             return NO_SECTION_KEY;
         }
@@ -183,6 +223,8 @@ public class PlayerLodTracker {
         scanExhausted = false;
         nextFullRescanTick = 0L;
         resetScanCursorLocked();
+        missedSections.clear();
+        missedSectionRetries.clear();
     }
 
     private void resetScanCursorLocked() {
